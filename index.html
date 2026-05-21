@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App with Supabase</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .todo-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .todo-item.completed {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+        .todo-item input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        .todo-item .todo-text {
+            flex-grow: 1;
+        }
+        .todo-item .delete-btn {
+            color: #dc3545;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .add-todo {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="todo-container">
+        <h1 class="text-center mb-4">Todo App</h1>
+        <div class="input-group add-todo">
+            <input type="text" id="todo-input" class="form-control" placeholder="Add a new task...">
+            <button id="add-todo-btn" class="btn btn-primary">Add</button>
+        </div>
+        <div id="todo-list" class="mt-3"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        // Initialize Supabase client
+        const supabaseUrl = 'https://your-project-url.supabase.co';
+        const supabaseKey = 'your-supabase-anon-key';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // DOM elements
+        const todoInput = document.getElementById('todo-input');
+        const addTodoBtn = document.getElementById('add-todo-btn');
+        const todoList = document.getElementById('todo-list');
+
+        // Fetch and display todos
+        async function fetchTodos() {
+            const { data: todos, error } = await supabase
+                .from('todos')
+                .select('*');
+
+            if (error) {
+                console.error('Error fetching todos:', error);
+                return;
+            }
+
+            todoList.innerHTML = '';
+            todos.forEach(todo => {
+                addTodoToDOM(todo);
+            });
+        }
+
+        // Add a todo to the DOM
+        function addTodoToDOM(todo) {
+            const todoItem = document.createElement('div');
+            todoItem.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+            todoItem.innerHTML = `
+                <input type="checkbox" ${todo.completed ? 'checked' : ''} data-id="${todo.id}">
+                <span class="todo-text">${todo.task}</span>
+                <span class="delete-btn" data-id="${todo.id}">❌</span>
+            `;
+
+            todoList.appendChild(todoItem);
+
+            // Add event listeners
+            const checkbox = todoItem.querySelector('input[type="checkbox"]');
+            const deleteBtn = todoItem.querySelector('.delete-btn');
+
+            checkbox.addEventListener('change', () => toggleTodoCompletion(todo.id, checkbox.checked));
+            deleteBtn.addEventListener('click', () => deleteTodo(todo.id));
+        }
+
+        // Add a new todo
+        async function addTodo() {
+            const task = todoInput.value.trim();
+            if (!task) return;
+
+            const { data, error } = await supabase
+                .from('todos')
+                .insert([{ task, completed: false }])
+                .select();
+
+            if (error) {
+                console.error('Error adding todo:', error);
+                return;
+            }
+
+            addTodoToDOM(data[0]);
+            todoInput.value = '';
+        }
+
+        // Toggle todo completion status
+        async function toggleTodoCompletion(id, completed) {
+            const { error } = await supabase
+                .from('todos')
+                .update({ completed })
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error updating todo:', error);
+            }
+        }
+
+        // Delete a todo
+        async function deleteTodo(id) {
+            const { error } = await supabase
+                .from('todos')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error deleting todo:', error);
+            } else {
+                fetchTodos(); // Refresh the list
+            }
+        }
+
+        // Event listeners
+        addTodoBtn.addEventListener('click', addTodo);
+        todoInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTodo();
+        });
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', fetchTodos);
+    </script>
+</body>
+</html>

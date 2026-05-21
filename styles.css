@@ -1,0 +1,44 @@
+/* Custom styles for the Todo App */
+body {
+    background-color: #f8f9fa;
+    padding: 20px;
+}
+
+todo-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+todo-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+todo-item.completed {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+todo-item input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+todo-item .todo-text {
+    flex-grow: 1;
+}
+
+todo-item .delete-btn {
+    color: #dc3545;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.add-todo {
+    margin-top: 20px;
+}
